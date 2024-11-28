@@ -3,7 +3,7 @@ const translateController = require("../Controllers/translateController");
 // const savedTransController = require("../Controllers/savedtransController");
 const authController = require("../Controllers/authController");
 
-const router = express.Router();
+const router = express.Router({ mergeParams: true });
 
 router.post(
   "/translate-and-save",
@@ -19,4 +19,9 @@ router.get(
   translateController.getUserTranslation
 );
 
+router.get(
+  "/favorites/translates",
+  authController.protect,
+  translateController.getFavorites
+);
 module.exports = router;

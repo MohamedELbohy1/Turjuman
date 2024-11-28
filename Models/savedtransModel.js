@@ -7,7 +7,7 @@ const savedTransSchema = new mongoose.Schema(
     },
     translation: {
       type: String,
-      required: true, 
+      required: true,
     },
     fromLang: {
       type: String,
@@ -24,6 +24,10 @@ const savedTransSchema = new mongoose.Schema(
       ref: "User", // Reference to the User model
       required: true,
       select: false,
+    },
+    isFavorite: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }
