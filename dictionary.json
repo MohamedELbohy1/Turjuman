@@ -1,0 +1,28 @@
+{
+  "en_to_ar": {
+    "hello": "مرحبا",
+    "world": "العالم",
+    "goodbye": "وداعا",
+    "how are you": "كيف حالك",
+    "good morning": "صباح الخير",
+    "good night": "تصبح على خير",
+    "i love you": "أنا أحبك",
+    "cat": "قطة",
+    "dog": "كلب",
+    "beautiful": "جميل",
+    "friend": "صديق"
+  },
+  "ar_to_en": {
+    "مرحبا": "hello",
+    "العالم": "world",
+    "وداعا": "goodbye",
+    "كيف حالك": "how are you",
+    "صباح الخير": "good morning",
+    "تصبح على خير": "good night",
+    "أنا أحبك": "i love you",
+    "قطة": "cat",
+    "كلب": "dog",
+    "جميل": "beautiful",
+    "صديق": "friend"
+  }
+}
