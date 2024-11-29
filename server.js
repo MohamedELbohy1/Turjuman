@@ -18,10 +18,9 @@ mongoose
 // Server
 // const port = 8001;
 
-const server = app.listen(8001 || process.env.PORT, () => {
-  console.log(`Server is runing on port ${port}`);
+const server = app.listen(process.env.PORT || 8001, () => {
+  console.log(`Server is running on port ${process.env.PORT || 8001}`);
 });
-
 // Events ==> list ==> callback(err)
 // Error outside express errors
 process.on("uncaughtException", (err) => {
