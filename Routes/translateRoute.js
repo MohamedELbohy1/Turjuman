@@ -7,12 +7,10 @@ const router = express.Router({ mergeParams: true });
 
 router.post(
   "/translate-and-save",
-  authController.protect, // This middleware will verify the JWT token before allowing the request
+  authController.protect,
   translateController.translateAndSave
-  //   savedTransController.saveTranslation
 );
 
-// Add more routes here if needed
 router.get(
   "/translates",
   authController.protect,
@@ -23,5 +21,11 @@ router.get(
   "/favorites/translates",
   authController.protect,
   translateController.getFavorites
+);
+
+router.delete(
+  "/translates/:id",
+  authController.protect,
+  translateController.deleteTranslationById
 );
 module.exports = router;

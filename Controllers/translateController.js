@@ -24,9 +24,9 @@ exports.translateAndSave = catchAsync(async (req, res, next) => {
   });
 
   if (existingTranslation) {
-    return res.status(200).json({
+    return res.status(409).json({
       status: "success",
-      message: "Translation already saved",
+      message: "Translation already exists",
       data: {
         original: text,
         translation: existingTranslation.translation,
@@ -68,6 +68,7 @@ exports.getUserTranslation = catchAsync(async (req, res, next) => {
     translation: trans.translation,
     fromLang: trans.fromLang,
     toLang: trans.toLang,
+    id: trans.id
   }));
 
   res.status(200).json({
@@ -95,3 +96,24 @@ exports.getFavorites = catchAsync(async (req, res, next) => {
     data: favoriteTranslations,
   });
 });
+
+exports.deleteTranslationById = catchAsync(async (req, res, next) => {
+  const deleteTranslation = await savedtransModel.findByIdAndDelete(
+    req.params.id
+  );
+
+  if (!deleteTranslation) {
+    return next(
+      new AppError(
+        `No Translation Found With This id${req.params.id} To Delete`,
+        404
+      )
+    );
+  }
+
+  res.status(200).json({
+    status: "success",
+    message: "Translation deleted Successfully",
+  });
+});
+
