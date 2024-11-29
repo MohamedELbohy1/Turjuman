@@ -117,3 +117,14 @@ exports.deleteTranslationById = catchAsync(async (req, res, next) => {
   });
 });
 
+exports.getalltranslations = catchAsync(async (req, res, next) => {
+  const translations = await savedtransModel.find();
+
+  res.status(200).json({
+    status: "success",
+    result: translations.length,
+    data: {
+      translations,
+    },
+  });
+});

@@ -23,6 +23,11 @@ router.get(
   translateController.getFavorites
 );
 
+router.get(
+  "/all-translates",
+  translateController.getalltranslations
+);
+
 router.delete(
   "/translates/:id",
   authController.protect,
