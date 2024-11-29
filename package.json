@@ -5,7 +5,11 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start:dev": "nodemon server.js",
-    "start:prod": "NODE_ENV=producation node server.js"
+    "start:prod": "NODE_ENV=producation node server.js",
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": "20.10.0"
   },
   "keywords": [],
   "author": "",

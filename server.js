@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const userRouter = require("./Routes/userRoute");
+
 const dotenv = require("dotenv");
 dotenv.config({ path: "./config.env" });
 
@@ -16,9 +16,9 @@ mongoose
   });
 
 // Server
-const port = 8001;
+// const port = 8001;
 
-const server=app.listen(port, () => {
+const server = app.listen(8001 || process.env.PORT, () => {
   console.log(`Server is runing on port ${port}`);
 });
 
