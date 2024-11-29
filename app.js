@@ -18,7 +18,7 @@ app.get("/", (req, res) => {
 });
 //Mounted Routes
 app.use("/api/v1/users", userRouter);
-app.use("/api/v1/translats", translateRouter);
+app.use("/api/v1/", translateRouter);
 
 //Handle unrouted routes with express
 app.use("*", (req, res, next) => {
