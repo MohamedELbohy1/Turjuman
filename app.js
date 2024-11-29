@@ -13,7 +13,9 @@ if (process.env.NODE_ENV === "development") {
 }
 
 app.use(express.json({ limit: "10kb" }));
-
+app.get("/", (req, res) => {
+  res.send("Welcome to Turjuman API");
+});
 //Mounted Routes
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/", translateRouter);
