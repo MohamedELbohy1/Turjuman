@@ -1,7 +1,69 @@
 const translate = require("translate-google");
 const savedtransModel = require("../Models/savedtransModel");
+const userModel = require("../Models/userModel");
 const catchAsync = require("express-async-handler");
 const AppError = require("../utils/AppError");
+
+exports.checkTranslationLimit = catchAsync(async (req, res, next) => {
+  const userId = req.user.id;
+  console.log(`Checking daily limit for user: ${userId}`);
+
+  const user = await userModel.findById(userId);
+
+  if (!user) {
+    return next(new AppError("User not found", 401));
+  }
+
+  
+  if (!user.dailyTranslations) {
+    user.set({
+      dailyTranslations: {
+        count: 0,
+        date: new Date(),
+      },
+    });
+    await user.save({ validateModifiedOnly: true });
+  }
+
+  const currentDate = new Date().toISOString().split("T")[0];
+  const lastActivityDate = new Date(user.dailyTranslations.date)
+    .toISOString()
+    .split("T")[0];
+
+  // Reset count if it's a new day
+  if (currentDate !== lastActivityDate) {
+    user.set({
+      dailyTranslations: {
+        count: 0,
+        date: new Date(),
+      },
+    });
+    await user.save({ validateModifiedOnly: true });
+  }
+
+  const dailyLimit = user.isPremium ? 100 : 10; // Example: Premium users get 100 translations; free-tier gets 2
+  if (user.dailyTranslations.count >= dailyLimit) {
+    return next(
+      new AppError(
+        `Daily translation limit of ${dailyLimit} reached. Upgrade to premium for more translations.`,
+        403
+      )
+    );
+  }
+
+  // Increment count and save
+  user.set({
+    dailyTranslations: {
+      count: user.dailyTranslations.count + 1, // Increment count
+      date: user.dailyTranslations.date, // Keep the same date
+    },
+  });
+  await user.save({ validateModifiedOnly: true });
+
+  console.log(`Daily translations updated: ${user.dailyTranslations}`);
+
+  next();
+});
 
 exports.translateAndSave = catchAsync(async (req, res, next) => {
   const { text, fromLang, toLang, isFavorite = false } = req.body;
@@ -68,7 +130,7 @@ exports.getUserTranslation = catchAsync(async (req, res, next) => {
     translation: trans.translation,
     fromLang: trans.fromLang,
     toLang: trans.toLang,
-    id: trans.id
+    id: trans.id,
   }));
 
   res.status(200).json({
@@ -86,6 +148,7 @@ exports.getFavorites = catchAsync(async (req, res, next) => {
 
   // Format the response to include original text and its translation
   const favoriteTranslations = favorites.map((trans) => ({
+    id: trans.id,
     originalText: trans.text,
     translation: trans.translation,
   }));

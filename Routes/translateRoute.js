@@ -8,6 +8,7 @@ const router = express.Router({ mergeParams: true });
 router.post(
   "/translate-and-save",
   authController.protect,
+  translateController.checkTranslationLimit,
   translateController.translateAndSave
 );
 
@@ -23,10 +24,7 @@ router.get(
   translateController.getFavorites
 );
 
-router.get(
-  "/all-translates",
-  translateController.getalltranslations
-);
+router.get("/all-translates", translateController.getalltranslations);
 
 router.delete(
   "/translates/:id",

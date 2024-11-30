@@ -32,11 +32,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "Please Confirm Your Password!!"],
       validate: {
-        //This only Works on CREATE and SAVE!!
         validator: function (el) {
-          return el === this.password;
+          // Only validate if the password is being created or modified
+          return this.isModified("password") ? el === this.password : true;
         },
-        message: "Passwords are not the Same!!",
+        message: "Passwords are not the same!",
       },
     },
     role: {
@@ -44,11 +44,18 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin"],
       default: "user",
     },
+    dailyTranslations: {
+      count: { type: Number, default: 0 },
+      date: { type: Date, default: Date.now },
+    },
+    isPremium: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
 
-//incryption the password with salt 12
+// Transform the JSON output to clean up the response
+
+// Encrypt the password with salt (12 rounds) before saving
 userSchema.pre("save", async function (next) {
   // This function works only when password is modified
   if (!this.isModified("password")) return next();
@@ -57,6 +64,7 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
+// Compare passwords during login
 userSchema.methods.correctPassword = async function (
   candidatePassword,
   userPassword
@@ -64,6 +72,7 @@ userSchema.methods.correctPassword = async function (
   return await bcrypt.compare(candidatePassword, userPassword);
 };
 
+// Create the User model
 const User = mongoose.model("User", userSchema);
 
 module.exports = User;
