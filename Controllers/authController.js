@@ -17,6 +17,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm,
     isPremium: req.body.isPremium,
+    role: req.body.role,
   });
 
   const token = signToken(newUser._id);
@@ -82,3 +83,15 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   next();
 });
+
+exports.restricTo = (...roles) => {
+  // roles is an array of ['admin'] return is the middleware fun
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new AppError("You do not have permission to perform this!", 403)
+      );
+    }
+    next();
+  };
+};

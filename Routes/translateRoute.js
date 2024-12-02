@@ -1,6 +1,5 @@
 const express = require("express");
 const translateController = require("../Controllers/translateController");
-// const savedTransController = require("../Controllers/savedtransController");
 const authController = require("../Controllers/authController");
 
 const router = express.Router({ mergeParams: true });
@@ -31,4 +30,11 @@ router.delete(
   authController.protect,
   translateController.deleteTranslationById
 );
+
+router.get(
+  "/translats/search",
+  authController.protect,
+  translateController.searchAndFilterTranslations
+);
+
 module.exports = router;

@@ -40,7 +40,7 @@ exports.checkTranslationLimit = catchAsync(async (req, res, next) => {
     await user.save({ validateModifiedOnly: true });
   }
 
-  const dailyLimit = user.isPremium ? 100 : 10; // Example: Premium users get 100 translations; free-tier gets 2
+  const dailyLimit = user.isPremium ? 100 : 100; // Example: Premium users get 100 translations; free-tier gets 2
   if (user.dailyTranslations.count >= dailyLimit) {
     return next(
       new AppError(
@@ -206,3 +206,73 @@ const suggestSimilarTranslations = async (newTranslation) => {
     .limit(5);
   return similarTranslations;
 };
+
+//search and filter
+exports.searchAndFilterTranslations = catchAsync(async (req, res) => {
+  const {
+    keyword,
+    language,
+    startDate,
+    endDate,
+    page = 1,
+    limit = 10,
+  } = req.query;
+
+  // Initialize dynamic query object
+  const query = {};
+
+  // Keyword filter
+  if (keyword) {
+    query.$or = [
+      { sourceText: { $regex: keyword, $options: "i" } },
+      { translatedText: { $regex: keyword, $options: "i" } },
+    ];
+  }
+
+  // Language filter
+  if (language) {
+    query.language = language;
+  }
+
+  // Date range filter
+  if (startDate || endDate) {
+    query.date = {};
+    if (startDate) {
+      const parsedStartDate = new Date(startDate);
+      if (isNaN(parsedStartDate.getTime())) {
+        return res.status(400).json({ message: "Invalid startDate format" });
+      }
+      query.date.$gte = parsedStartDate;
+    }
+    if (endDate) {
+      const parsedEndDate = new Date(endDate);
+      if (isNaN(parsedEndDate.getTime())) {
+        return res.status(400).json({ message: "Invalid endDate format" });
+      }
+      query.date.$lte = parsedEndDate;
+    }
+  }
+
+  // Pagination parameters
+  const pageNum = parseInt(page, 10);
+  const limitNum = parseInt(limit, 10);
+  const skip = (pageNum - 1) * limitNum;
+
+  // Fetch translations from the database
+  const translations = await savedtransModel
+    .find(query)
+    .sort({ date: -1 })
+    .skip(skip)
+    .limit(limitNum);
+
+  // Send response
+  res.status(200).json({
+    status: "success",
+    page: pageNum,
+    limit: limitNum,
+    count: translations.length,
+    data: translations,
+  });
+});
+
+
