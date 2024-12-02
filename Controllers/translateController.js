@@ -14,7 +14,6 @@ exports.checkTranslationLimit = catchAsync(async (req, res, next) => {
     return next(new AppError("User not found", 401));
   }
 
-  
   if (!user.dailyTranslations) {
     user.set({
       dailyTranslations: {
@@ -107,12 +106,15 @@ exports.translateAndSave = catchAsync(async (req, res, next) => {
     isFavorite,
   });
 
+  const similarTranslations = await suggestSimilarTranslations(savedTrans);
+
   // Respond with the translation and saved entry
   res.status(200).json({
     status: "success",
     data: {
       original: text,
       translation: result,
+      similarTranslations,
       savedTranslation: savedTrans,
     },
   });
@@ -191,3 +193,16 @@ exports.getalltranslations = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+const suggestSimilarTranslations = async (newTranslation) => {
+  const similarTranslations = await savedtransModel
+    .find({
+      $text: { $search: newTranslation.text },
+      fromLang: newTranslation.fromLang,
+      toLang: newTranslation.toLang,
+      _id: { $ne: newTranslation._id },
+    })
+    .select("text translation")
+    .limit(5);
+  return similarTranslations;
+};
