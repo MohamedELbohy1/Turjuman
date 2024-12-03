@@ -32,7 +32,11 @@ router.post("/login", authController.login);
 router.patch("/:id", userController.updateUser);
 router.delete("/:id", userController.deleteMe);
 
-router.route("/").get(userController.getAllUsers);
-router.route("/:id").get(userController.getUser);
+router
+  .route("/")
+  .get(authController.restricTo("admin"), userController.getAllUsers);
+router
+  .route("/:id")
+  .get(authController.restricTo("admin"), userController.getUser);
 
 module.exports = router;

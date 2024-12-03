@@ -275,4 +275,31 @@ exports.searchAndFilterTranslations = catchAsync(async (req, res) => {
   });
 });
 
+// exports.addToRecentlyViewed = catchAsync(async (req, res, next) => {
+//   const { translationId } = req.body; // ID of the translation being viewed
+//   const userId = req.user.id; // ID of the logged-in user
 
+//   // Fetch the user
+//   const user = await userModel.findById(userId);
+
+//   if (!user) {
+//     return next(new AppError("User not found", 404));
+//   }
+
+//   // Add the translation ID to the recently viewed list
+//   if (!user.recentlyViewed.includes(translationId)) {
+//     user.recentlyViewed.push(translationId);
+
+//     // Limit the array to the last 10 viewed translations
+//     if (user.recentlyViewed.length > 10) {
+//       user.recentlyViewed.shift(); // Remove the oldest entry
+//     }
+
+//     await user.save({ validateModifiedOnly: true });
+//   }
+
+//   res.status(200).json({
+//     status: "success",
+//     message: "Translation added to recently viewed.",
+//   });
+// });
