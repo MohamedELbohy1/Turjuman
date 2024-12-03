@@ -2,25 +2,19 @@ const savedtransModel = require("../Models/savedtransModel");
 const userModel = require("../Models/userModel");
 const catchAsync = require("express-async-handler");
 const AppError = require("../utils/AppError");
+
 exports.getTopActiveUsers = catchAsync(async (req, res, next) => {
   const topUsers = await savedtransModel.aggregate([
-    // Group translations by userId and count the number of translations per user
     { $group: { _id: "$userId", count: { $sum: 1 } } },
-
-    // Sort by the number of translations in descending order
     { $sort: { count: -1 } },
-
-    // Limit to the top 5 users
     { $limit: 5 },
 
-    // Convert _id to ObjectId to ensure it matches the type in users collection
     {
       $addFields: {
-        _id: { $toObjectId: "$_id" }, // Ensure _id matches ObjectId in users collection
+        _id: { $toObjectId: "$_id" },
       },
     },
 
-    // Lookup user details from the userModel
     {
       $lookup: {
         from: "users", // Name of the user collection
@@ -30,7 +24,6 @@ exports.getTopActiveUsers = catchAsync(async (req, res, next) => {
       },
     },
 
-    // Project the required fields
     {
       $project: {
         count: 1,
@@ -46,7 +39,6 @@ exports.getTopActiveUsers = catchAsync(async (req, res, next) => {
     },
   ]);
 
-  // Return the top users
   res.status(200).json({
     status: "success",
     data: topUsers,
