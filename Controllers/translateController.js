@@ -314,7 +314,7 @@ const getTranslationStats = async (userId) => {
   const dailyStats = await savedtransModel.aggregate([
     {
       $match: {
-        userId: new mongoose.Types.ObjectId(userId), 
+        userId: new mongoose.Types.ObjectId(userId),
         createdAt: { $gte: startOfDay },
       },
     },
