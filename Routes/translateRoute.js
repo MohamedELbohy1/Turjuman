@@ -32,6 +32,12 @@ router.delete(
 );
 
 router.get(
+  "/translations-History",
+  authController.protect,
+  translateController.getTranslationHistory
+);
+
+router.get(
   "/translats/search",
   authController.protect,
   translateController.searchAndFilterTranslations

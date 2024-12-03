@@ -3,6 +3,7 @@ const savedtransModel = require("../Models/savedtransModel");
 const userModel = require("../Models/userModel");
 const catchAsync = require("express-async-handler");
 const AppError = require("../utils/AppError");
+const mongoose = require("mongoose");
 
 exports.checkTranslationLimit = catchAsync(async (req, res, next) => {
   const userId = req.user.id;
@@ -303,3 +304,98 @@ exports.searchAndFilterTranslations = catchAsync(async (req, res) => {
 //     message: "Translation added to recently viewed.",
 //   });
 // });
+
+const getTranslationStats = async (userId) => {
+  const now = new Date();
+  const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+  const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const dailyStats = await savedtransModel.aggregate([
+    {
+      $match: {
+        userId: new mongoose.Types.ObjectId(userId), 
+        createdAt: { $gte: startOfDay },
+      },
+    },
+    { $group: { _id: "$toLang", count: { $sum: 1 } } },
+    {
+      $group: {
+        _id: null,
+        translations: {
+          $push: { toLang: "$_id", count: "$count" },
+        },
+        dailyTotal: { $sum: "$count" },
+      },
+    },
+  ]);
+
+  const weeklyStats = await savedtransModel.aggregate([
+    {
+      $match: {
+        userId: new mongoose.Types.ObjectId(userId), // Corrected
+        createdAt: { $gte: startOfWeek },
+      },
+    },
+    { $group: { _id: "$toLang", count: { $sum: 1 } } },
+    {
+      $group: {
+        _id: null,
+        translations: {
+          $push: { toLang: "$_id", count: "$count" },
+        },
+        weeklyTotal: { $sum: "$count" },
+      },
+    },
+  ]);
+
+  const monthlyStats = await savedtransModel.aggregate([
+    {
+      $match: {
+        userId: new mongoose.Types.ObjectId(userId), // Corrected
+        createdAt: { $gte: startOfMonth },
+      },
+    },
+    { $group: { _id: "$toLang", count: { $sum: 1 } } },
+    {
+      $group: {
+        _id: null,
+        translations: {
+          $push: { toLang: "$_id", count: "$count" },
+        },
+        monthlyTotal: { $sum: "$count" },
+      },
+    },
+  ]);
+
+  const mostSelectedLanguages = await savedtransModel.aggregate([
+    { $match: { userId: new mongoose.Types.ObjectId(userId) } }, // Corrected
+    {
+      $group: {
+        _id: { fromLang: "$fromLang", toLang: "$toLang" },
+        count: { $sum: 1 },
+      },
+    },
+    { $sort: { count: -1 } },
+    { $limit: 2 },
+  ]);
+
+  return {
+    daily: dailyStats[0] || { translations: [], total: 0 },
+    weekly: weeklyStats[0] || { translations: [], total: 0 },
+    monthly: monthlyStats[0] || { translations: [], total: 0 },
+    mostSelectedLanguages:
+      mostSelectedLanguages.length > 0 ? mostSelectedLanguages : [],
+  };
+};
+
+exports.getTranslationHistory = catchAsync(async (req, res, next) => {
+  const userId = req.user.id;
+
+  const stats = await getTranslationStats(userId);
+
+  res.status(200).json({
+    status: "success",
+    data: stats,
+  });
+});
