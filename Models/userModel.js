@@ -49,12 +49,7 @@ const userSchema = new mongoose.Schema(
       date: { type: Date, default: Date.now },
     },
     isPremium: { type: Boolean, default: false },
-    // recentlyViewed: [
-    //   {
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: "savedTrans", 
-    //   },
-    // ], 
+    isActive: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

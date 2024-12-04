@@ -34,9 +34,18 @@ router.delete("/:id", userController.deleteMe);
 
 router
   .route("/")
-  .get(authController.restricTo("admin"), userController.getAllUsers);
+  .get(
+    authController.protect,
+    authController.restricTo("admin"),
+    userController.getAllUsers
+  );
+
 router
   .route("/:id")
-  .get(authController.restricTo("admin"), userController.getUser);
+  .get(
+    authController.protect,
+    authController.restricTo("admin"),
+    userController.getUser
+  );
 
 module.exports = router;

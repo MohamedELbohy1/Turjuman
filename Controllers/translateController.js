@@ -209,101 +209,49 @@ const suggestSimilarTranslations = async (newTranslation) => {
 };
 
 //search and filter
-exports.searchAndFilterTranslations = catchAsync(async (req, res) => {
-  const {
-    keyword,
-    language,
-    startDate,
-    endDate,
-    page = 1,
-    limit = 10,
-  } = req.query;
+exports.searchAndFilterTranslations = async (req, res) => {
+  try {
+    const { keyword, fromLang, toLang, startDate, endDate, isFavorite } =
+      req.query;
 
-  // Initialize dynamic query object
-  const query = {};
+    const query = { userId: req.user.id }; // Match only translations for the authenticated user
 
-  // Keyword filter
-  if (keyword) {
-    query.$or = [
-      { sourceText: { $regex: keyword, $options: "i" } },
-      { translatedText: { $regex: keyword, $options: "i" } },
-    ];
-  }
-
-  // Language filter
-  if (language) {
-    query.language = language;
-  }
-
-  // Date range filter
-  if (startDate || endDate) {
-    query.date = {};
-    if (startDate) {
-      const parsedStartDate = new Date(startDate);
-      if (isNaN(parsedStartDate.getTime())) {
-        return res.status(400).json({ message: "Invalid startDate format" });
-      }
-      query.date.$gte = parsedStartDate;
+    if (keyword) {
+      query.$text = { $search: keyword };
     }
-    if (endDate) {
-      const parsedEndDate = new Date(endDate);
-      if (isNaN(parsedEndDate.getTime())) {
-        return res.status(400).json({ message: "Invalid endDate format" });
-      }
-      query.date.$lte = parsedEndDate;
+
+    if (fromLang) {
+      query.fromLang = fromLang; // Filter by source language
     }
+
+    if (toLang) {
+      query.toLang = toLang; // Filter by target language
+    }
+
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate); // Start date
+      if (endDate) query.createdAt.$lte = new Date(endDate); // End date
+    }
+
+    if (isFavorite !== undefined) {
+      query.isFavorite = isFavorite === "true";
+    }
+
+    translations = await savedtransModel.find(query);
+
+    res.status(200).json({
+      status: "success",
+      results: translations.length,
+      data: translations,
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: "fail",
+      message: err.message,
+    });
   }
-
-  // Pagination parameters
-  const pageNum = parseInt(page, 10);
-  const limitNum = parseInt(limit, 10);
-  const skip = (pageNum - 1) * limitNum;
-
-  // Fetch translations from the database
-  const translations = await savedtransModel
-    .find(query)
-    .sort({ date: -1 })
-    .skip(skip)
-    .limit(limitNum);
-
-  // Send response
-  res.status(200).json({
-    status: "success",
-    page: pageNum,
-    limit: limitNum,
-    count: translations.length,
-    data: translations,
-  });
-});
-
-// exports.addToRecentlyViewed = catchAsync(async (req, res, next) => {
-//   const { translationId } = req.body; // ID of the translation being viewed
-//   const userId = req.user.id; // ID of the logged-in user
-
-//   // Fetch the user
-//   const user = await userModel.findById(userId);
-
-//   if (!user) {
-//     return next(new AppError("User not found", 404));
-//   }
-
-//   // Add the translation ID to the recently viewed list
-//   if (!user.recentlyViewed.includes(translationId)) {
-//     user.recentlyViewed.push(translationId);
-
-//     // Limit the array to the last 10 viewed translations
-//     if (user.recentlyViewed.length > 10) {
-//       user.recentlyViewed.shift(); // Remove the oldest entry
-//     }
-
-//     await user.save({ validateModifiedOnly: true });
-//   }
-
-//   res.status(200).json({
-//     status: "success",
-//     message: "Translation added to recently viewed.",
-//   });
-// });
+};
 
 const getTranslationStats = async (userId) => {
   const now = new Date();
@@ -397,5 +345,40 @@ exports.getTranslationHistory = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     data: stats,
+  });
+});
+
+//SORTING
+exports.getFavoritesInOrder = catchAsync(async (req, res, next) => {
+  const userId = req.user.id;
+  const { sortBy = "text", sortOrder = "asc" } = req.query; // Default sorting by text in ascending order
+
+  // Define sorting options
+  let sortOptions = {};
+  if (sortBy === "text") {
+    sortOptions.text = sortOrder === "desc" ? -1 : 1;
+  } else if (sortBy === "createdAt") {
+    sortOptions.createdAt = sortOrder === "desc" ? -1 : 1;
+  }
+
+  // Fetch and sort favorite translations
+  const favorites = await savedtransModel
+    .find({ userId, isFavorite: true })
+    .collation({ locale: "en", strength: 2 }) // Case-insensitive sorting
+    .sort(sortOptions);
+
+  // Format the response data
+  const favoriteTranslations = favorites.map((trans) => ({
+    id: trans.id,
+    originalText: trans.text.trim(), // Ensure trimmed output
+    translation: trans.translation,
+    createdAt: trans.createdAt,
+  }));
+
+  // Return sorted favorites
+  res.status(200).json({
+    status: "success",
+    count: favoriteTranslations.length,
+    data: favoriteTranslations,
   });
 });

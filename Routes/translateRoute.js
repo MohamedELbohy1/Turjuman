@@ -23,6 +23,12 @@ router.get(
   translateController.getFavorites
 );
 
+router.get(
+  "/favorites-order",
+  authController.protect,
+  translateController.getFavoritesInOrder
+);
+
 router.get("/all-translates", translateController.getalltranslations);
 
 router.delete(
@@ -32,7 +38,7 @@ router.delete(
 );
 
 router.get(
-  "/translations-History",
+  "/translations-History-stats",
   authController.protect,
   translateController.getTranslationHistory
 );

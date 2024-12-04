@@ -29,15 +29,10 @@ const savedTransSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    lastActive:{
-      type: Date,
-      default: Date.now,
-      select: false,
-      expires: 2592000 // 30 days in seconds (2592000 seconds = 30 days)
-    }
   },
   { timestamps: true }
 );
+savedTransSchema.index({ translation: "text" });
 
 const savedtransModel = mongoose.model("savedTrans", savedTransSchema);
 

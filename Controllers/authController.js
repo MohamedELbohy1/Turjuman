@@ -44,6 +44,11 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError("Invalid email or password", 401));
   }
 
+  if (user) {
+    user.isActive = true;
+    await user.save({ validateModifiedOnly: true });
+  }
+
   const token = signToken(user._id);
   res.status(200).json({
     status: "success",

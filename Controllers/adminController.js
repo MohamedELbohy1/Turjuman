@@ -49,7 +49,7 @@ exports.getUsageAnalytics = catchAsync(async (req, res, next) => {
   const totalTranslations = await savedtransModel.countDocuments();
 
   const activeUsers = await userModel.countDocuments({
-    lastActive: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+    isActive: { $eq: true },
   });
 
   const todayStart = new Date();
