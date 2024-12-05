@@ -13,6 +13,15 @@ router.get(
 );
 
 router.get(
+  "/me",
+  authController.protect,
+  userController.getMe,
+  userController.getUser
+);
+
+router.delete("/deleteMe", authController.protect, userController.deleteMe);
+
+router.get(
   "/user-Analytics",
   authController.protect,
   authController.restricTo("admin"),
@@ -29,8 +38,8 @@ router.get(
 router.post("/signup", authController.signup);
 router.post("/login", authController.login);
 
-router.patch("/:id", userController.updateUser);
-router.delete("/:id", userController.deleteMe);
+router.patch("/:id", authController.protect, userController.updateUser);
+router.delete("/:id", authController.protect, userController.deleteMe);
 
 router
   .route("/")

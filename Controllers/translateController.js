@@ -4,6 +4,8 @@ const userModel = require("../Models/userModel");
 const catchAsync = require("express-async-handler");
 const AppError = require("../utils/AppError");
 const mongoose = require("mongoose");
+const APIfeatures = require("../utils/ApiFeaturs");
+const factory = require("../Controllers/handerController");
 
 exports.checkTranslationLimit = catchAsync(async (req, res, next) => {
   const userId = req.user.id;
@@ -163,37 +165,8 @@ exports.getFavorites = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.deleteTranslationById = catchAsync(async (req, res, next) => {
-  const deleteTranslation = await savedtransModel.findByIdAndDelete(
-    req.params.id
-  );
-
-  if (!deleteTranslation) {
-    return next(
-      new AppError(
-        `No Translation Found With This id${req.params.id} To Delete`,
-        404
-      )
-    );
-  }
-
-  res.status(200).json({
-    status: "success",
-    message: "Translation deleted Successfully",
-  });
-});
-
-exports.getalltranslations = catchAsync(async (req, res, next) => {
-  const translations = await savedtransModel.find();
-
-  res.status(200).json({
-    status: "success",
-    result: translations.length,
-    data: {
-      translations,
-    },
-  });
-});
+exports.deleteTranslationById = factory.deleteOne(savedtransModel);
+exports.getalltranslations = factory.getAll(savedtransModel);
 
 const suggestSimilarTranslations = async (newTranslation) => {
   const similarTranslations = await savedtransModel

@@ -1,56 +1,24 @@
 const User = require("../Models/userModel");
 const catchAsync = require("express-async-handler");
 const AppError = require("./../utils/AppError");
+const ApiFeaturs = require("../utils/ApiFeaturs");
+const factory = require("../Controllers/handerController");
 
-exports.getAllUsers = catchAsync(async (req, res, next) => {
-  const users = await User.find();
-
-  // Check if the users array is empty
-  if (users.length === 0) {
-    return next(new AppError("No users found", 404)); // Use 404 for "not found" status
-  }
-
-  res.status(200).json({
-    status: "success",
-    result: users.length,
-    data: users,
-  });
-});
-
-exports.getUser = catchAsync(async (req, res, next) => {
-  const user = await User.findById(req.params.id);
-  if (!user) {
-    return next(
-      new AppError(`There is not a USER with this id ${req.params.id}`, 402)
-    );
-  }
-  res.status(200).json({
-    status: "success",
-    data: user,
-  });
-});
-
-exports.updateUser = catchAsync(async (req, res, next) => {
-  const user = await User.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
-  });
-
-  if (!user) {
-    return next(new AppError(`No user found with ID ${req.params.id}`, 404));
-  }
-
-  res.status(200).json({
-    status: "success",
-    data: user,
-  });
-});
+// Here we made a middleware to save the current user ID
+exports.getMe = (req, res, next) => {
+  req.params.id = req.user.id;
+  next();
+};
 
 exports.deleteMe = catchAsync(async (req, res, next) => {
-  await User.findByIdAndDelete(req.user.id, { active: false });
-
-  res.status(204).json({
-    status: "success",
-    data: null,
+    await User.findByIdAndUpdate(req.user.id, { active: false });
+    res.status(204).json({
+      status: 'success',
+      data: null,
+    });
   });
-});
+
+exports.getAllUsers = factory.getAll(User);
+exports.getUser = factory.getOne(User);
+exports.updateUser = factory.updateOne(User);
+exports.deleteMe = factory.deleteOne(User);
