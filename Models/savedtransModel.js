@@ -32,7 +32,6 @@ const savedTransSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-savedTransSchema.index({ translation: "text" });
 
 const savedtransModel = mongoose.model("savedTrans", savedTransSchema);
 
