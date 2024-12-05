@@ -5,56 +5,21 @@ const authController = require("./../Controllers/authController");
 
 const router = express.Router();
 
-router.get(
-  "/top-users",
-  authController.protect,
-  authController.restricTo("admin"),
-  adminController.getTopActiveUsers
-);
-
-router.get(
-  "/me",
-  authController.protect,
-  userController.getMe,
-  userController.getUser
-);
-
-router.delete("/deleteMe", authController.protect, userController.deleteMe);
-
-router.get(
-  "/user-Analytics",
-  authController.protect,
-  authController.restricTo("admin"),
-  adminController.getUsageAnalytics
-);
-
-router.get(
-  "/Usage-Analytics",
-  authController.protect,
-  authController.restricTo("admin"),
-  adminController.getUsageAnalytics
-);
-
 router.post("/signup", authController.signup);
 router.post("/login", authController.login);
 
-router.patch("/:id", authController.protect, userController.updateUser);
-router.delete("/:id", authController.protect, userController.deleteMe);
+router.use(authController.protect);
 
-router
-  .route("/")
-  .get(
-    authController.protect,
-    authController.restricTo("admin"),
-    userController.getAllUsers
-  );
+router.get("/me", userController.getMe, userController.getUser);
+router.delete("/deleteMe", userController.deleteMe);
+router.patch("/:id", userController.updateUser);
+router.delete("/:id", userController.deleteMe);
 
-router
-  .route("/:id")
-  .get(
-    authController.protect,
-    authController.restricTo("admin"),
-    userController.getUser
-  );
+router.use(authController.restricTo("admin"));
+
+router.get("/top-users", adminController.getTopActiveUsers);
+router.get("/Usage-Analytics", adminController.getUsageAnalytics);
+router.route("/").get(userController.getAllUsers);
+router.route("/:id").get(userController.getUser);
 
 module.exports = router;
