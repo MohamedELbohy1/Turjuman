@@ -19,46 +19,6 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.updateUserPassword = catchAsync(async (req, res, next) => {
-  const logedUser = await User.findById(req.params.id).select("+password");
-
-  if (!logedUser) {
-    return next(
-      new AppError(`No user found with this ID ${req.params.id}`, 404)
-    );
-  }
-
-  const { password, confirmpassword, CurrentPassword } = req.body;
-
-  const isMatch = await bcrypt.compare(CurrentPassword, logedUser.password);
-  if (!isMatch) {
-    return next(new AppError("Wrong Current Password. Please try again.", 401));
-  }
-
-  if (password !== confirmpassword) {
-    return next(new AppError("Passwords do not match. Please try again.", 400));
-  }
-
-  const hashedPassword = await bcrypt.hash(password, 12);
-
-  const user = await User.findByIdAndUpdate(
-    req.params.id,
-    { password: hashedPassword },
-    { new: true, validateModifiedOnly: true }
-  );
-
-  if (!user) {
-    return next(
-      new AppError(`No user found with this ID ${req.params.id}`, 404)
-    );
-  }
-
-  res.status(200).json({
-    status: "success",
-    message: "Password updated successfully",
-    data: user,
-  });
-});
 
 exports.updateUser = catchAsync(async (req, res, next) => {
   const doc = await User.findByIdAndUpdate(

@@ -14,7 +14,7 @@ router.get("/me", userController.getMe, userController.getUser);
 router.delete("/deleteMe", userController.deleteMe);
 router.put("/UpdateUserInfo/:id", userController.updateUser);
 router.delete("/:id", userController.deleteMe);
-router.put("/ChangePassword/:id", userController.updateUserPassword);
+router.put("/ChangePassword/:id", authController.updateUserPassword);
 
 router.use(authController.restricTo("admin"));
 
