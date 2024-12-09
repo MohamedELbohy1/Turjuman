@@ -24,5 +24,6 @@ const sendErrorForDev = (err, res) => {
       message: err.message,
     });
   };
+  
   module.exports = globalErrorHandler;
   
