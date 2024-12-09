@@ -50,6 +50,7 @@ const userSchema = new mongoose.Schema(
     },
     isPremium: { type: Boolean, default: false },
     isActive: { type: Boolean, default: false },
+    passwordChangedAt: Date,
   },
   { timestamps: true }
 );
@@ -71,6 +72,19 @@ userSchema.methods.correctPassword = async function (
   userPassword
 ) {
   return await bcrypt.compare(candidatePassword, userPassword);
+};
+
+userSchema.methods.ChangedPasswordAfter = function (JWTTimestamp) {
+  // timestamp is a date when the token was issued
+  if (this.passwordChangedAt) {
+    const ChangedTimestamp = parseInt(
+      this.passwordChangedAt.getTime() / 1000,
+      10
+    );
+    return JWTTimestamp < ChangedTimestamp; // it means that the password was changed
+  }
+  // false means that password NOT changed
+  return false;
 };
 
 // Create the User model

@@ -84,7 +84,15 @@ exports.protect = catchAsync(async (req, res, next) => {
     );
   }
 
-  // 4) Attach the user to the request object
+  if (currentUser.ChangedPasswordAfter(decoded.iat)) {
+    return next(
+      new AppError(
+        "The user recently changed the password! please log in again",
+        401
+      )
+    );
+  }
+
   req.user = currentUser;
 
   next();
