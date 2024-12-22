@@ -10,10 +10,11 @@ const globalErrorHandler = require("./Middleware/errorMiddleware");
 const app = express();
 
 const corsOptions = {
-  origin: "*", // Allow all origins
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // Allowed HTTP methods
-  allowedHeaders: "Content-Type,Authorization", // Allowed headers
+  origin: "*", 
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE", 
+  allowedHeaders: "Content-Type,Authorization", 
 };
+
 app.use(cors(corsOptions));
 
 if (process.env.NODE_ENV === "development") {
