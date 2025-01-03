@@ -14,7 +14,7 @@ const corsOptions = {
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE", 
   allowedHeaders: "Content-Type,Authorization", 
 };
-
+// cors 
 app.use(cors(corsOptions));
 
 if (process.env.NODE_ENV === "development") {
