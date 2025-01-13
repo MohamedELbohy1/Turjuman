@@ -31,8 +31,8 @@ router.get(
 
 router.get(
   "/all-translates",
-  // authController.protect,
-  // authController.restricTo("admin"),
+  authController.protect,
+  authController.restricTo("admin"),
   translateController.getalltranslations
 );
 
