@@ -29,7 +29,12 @@ router.get(
   translateController.getFavoritesInOrder
 );
 
-router.get("/all-translates", translateController.getalltranslations);
+router.get(
+  "/all-translates",
+  authController.protect,
+  authController.restricTo("admin"),
+  translateController.getalltranslations
+);
 
 router.delete(
   "/translates/:id",
