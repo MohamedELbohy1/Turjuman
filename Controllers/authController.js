@@ -3,6 +3,7 @@ const catchAsync = require("express-async-handler");
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const AppError = require("../utils/AppError");
+const session = require("express-session");
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -56,45 +57,109 @@ exports.login = catchAsync(async (req, res, next) => {
   });
 });
 
+// exports.protect = catchAsync(async (req, res, next) => {
+//   // 1) Get the token from the Authorization header
+//   let token;
+//   if (
+//     req.headers.authorization &&
+//     req.headers.authorization.startsWith("Bearer")
+//   ) {
+//     token = req.headers.authorization.split(" ")[1];
+//   }
+
+  
+
+//   if (!token) {
+//     return next(
+//       new AppError("You are not logged in! Please log in to get access.", 401)
+//     );
+//   } 
+
+//   // 2) Verify the token
+//   const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+//   // 3) Check if the user still exists
+//   const currentUser = await User.findById(decoded.id);
+
+//   if (!currentUser) {
+//     return next(
+//       new AppError("The user belonging to this token no longer exists.", 401)
+//     );
+//   }
+
+//   if (currentUser.ChangedPasswordAfter(decoded.iat)) {
+//     return next(
+//       new AppError(
+//         "The user recently changed the password! please log in again",
+//         401
+//       )
+//     );
+//   }
+
+//   req.user = currentUser;
+
+//   next();
+// });
 exports.protect = catchAsync(async (req, res, next) => {
   // 1) Get the token from the Authorization header
   let token;
   if (
     req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
+    req.headers.authorization.startsWith('Bearer')
   ) {
-    token = req.headers.authorization.split(" ")[1];
+    token = req.headers.authorization.split(' ')[1];
   }
 
-  if (!token) {
-    return next(
-      new AppError("You are not logged in! Please log in to get access.", 401)
-    );
+  // 2) If the user is authenticated (token exists), verify the token
+  if (token) {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // 3) Check if the user still exists
+    const currentUser = await User.findById(decoded.id);
+
+    if (!currentUser) {
+      return next(
+        new AppError('The user belonging to this token no longer exists.', 401)
+      );
+    }
+
+    // 4) Check if the user changed their password after the token was issued
+    if (currentUser.ChangedPasswordAfter(decoded.iat)) {
+      return next(
+        new AppError(
+          'The user recently changed the password! Please log in again.',
+          401
+        )
+      );
+    }
+
+    // 5) Attach the user to the request object
+    req.user = currentUser;
+    return next();
   }
 
-  // 2) Verify the token
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  // 6) If the user is a guest, track their translation attempts
+  const GUEST_TRANSLATION_LIMIT = 2;
 
-  // 3) Check if the user still exists
-  const currentUser = await User.findById(decoded.id);
-
-  if (!currentUser) {
-    return next(
-      new AppError("The user belonging to this token no longer exists.", 401)
-    );
+  // Initialize guest translation count in session if it doesn't exist
+  if (!req.session.guestTranslationCount) {
+    req.session.guestTranslationCount = 0;
   }
 
-  if (currentUser.ChangedPasswordAfter(decoded.iat)) {
+  // Check if the guest has exceeded the translation limit
+  if (req.session.guestTranslationCount >= GUEST_TRANSLATION_LIMIT) {
     return next(
       new AppError(
-        "The user recently changed the password! please log in again",
-        401
+        `You have reached the maximum limit of ${GUEST_TRANSLATION_LIMIT} translations as a guest. Please log in for more translations.`,
+        403
       )
     );
   }
 
-  req.user = currentUser;
+  // Increment the guest translation count
+  req.session.guestTranslationCount += 1;
 
+  // Proceed to the next middleware or route handler
   next();
 });
 
@@ -150,3 +215,38 @@ exports.updateUserPassword = catchAsync(async (req, res, next) => {
     data: user,
   });
 });
+
+// exports.protectUserTranslate = catchAsync(async (req, res, next) => {
+//   let token;
+//   if (
+//     req.headers.authorization &&
+//     req.headers.authorization.startsWith("Bearer")
+//   ) {
+//     token = req.headers.authorization.split(" ")[1];
+//   }
+
+//   if (!token) {
+//     req.user = null;
+//     return next();
+//   }
+
+//   const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//   const currentUser = await User.findById(decoded.id);
+
+//   if (!currentUser) {
+//     req.user = null;
+//     return next();
+//   }
+
+//   if (currentUser.ChangedPasswordAfter(decoded.iat)) {
+//     return next(
+//       new AppError(
+//         "The user recently changed the password! please log in again",
+//         401
+//       )
+//     );
+//   }
+
+//   req.user = currentUser;
+//   next();
+// });

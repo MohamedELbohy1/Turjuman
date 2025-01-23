@@ -6,6 +6,7 @@ const AppError = require("../utils/AppError");
 const mongoose = require("mongoose");
 const APIfeatures = require("../utils/ApiFeaturs");
 const factory = require("../Controllers/handerController");
+const session = require("express-session");
 
 exports.checkTranslationLimit = catchAsync(async (req, res, next) => {
   const userId = req.user.id;
@@ -74,12 +75,38 @@ exports.translateAndSave = catchAsync(async (req, res, next) => {
   if (!text || !fromLang || !toLang) {
     return next(new AppError("Please provide text, fromLang, and toLang", 400));
   }
+ 
+  const userid = req.user;
+  if (!userid) {
+    const GUEST_TRANSLATION_LIMIT = 2;
+    if (!req.session.guestTranslationCount) {
+      req.session.guestTranslationCount = 0;
+    }
+
+    if (req.session.guestTranslationCount >= GUEST_TRANSLATION_LIMIT) {
+      return res.status(403).json({
+        status: "fail",
+        message: `You have reached the maximum limit of ${GUEST_TRANSLATION_LIMIT} translations as a guest. Please log in for more translations.`,
+      });
+    }
+
+    req.session.guestTranslationCount += 1;
+    return res.status(200).json({
+      status: "success",
+      data: {
+        original: text,
+        translation: translations,
+        count: req.session.guestTranslationCount,
+      },
+    });
+  }
 
   // Use translate-google to get the translation
   const result = await translate(text, { from: fromLang, to: toLang });
 
   // Check if the translation already exists in the database
   const userId = req.user.id;
+  console.log(userId);
   const existingTranslation = await savedtransModel.findOne({
     text,
     fromLang,

@@ -6,15 +6,16 @@ const translateRouter = require("./Routes/translateRoute");
 const AppError = require("./utils/AppError");
 const bodyParser = require("body-parser");
 const globalErrorHandler = require("./Middleware/errorMiddleware");
+const session = require("express-session");
 
 const app = express();
 
 const corsOptions = {
-  origin: "*", 
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE", 
-  allowedHeaders: "Content-Type,Authorization", 
+  origin: "*",
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  allowedHeaders: "Content-Type,Authorization",
 };
-// cors 
+// cors
 app.use(cors(corsOptions));
 
 if (process.env.NODE_ENV === "development") {
@@ -22,6 +23,14 @@ if (process.env.NODE_ENV === "development") {
 }
 
 app.use(express.json({ limit: "10kb" }));
+app.use(
+  session({
+    secret: process.env.JWT_SECRET, // Replace with a strong secret key
+    resave: false, // Don't save the session if it hasn't changed
+    saveUninitialized: true, // Save new sessions
+  })
+);
+
 app.get("/", (req, res) => {
   res.send("Welcome to Turjuman API[Beta]");
 });
