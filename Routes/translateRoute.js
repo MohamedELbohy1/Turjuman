@@ -6,7 +6,7 @@ const router = express.Router({ mergeParams: true });
 
 router.post(
   "/translate-and-save",
-  authController.protect,
+  authController.protectUserTranslate,
   translateController.checkTranslationLimit,
   translateController.translateAndSave
 );

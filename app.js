@@ -23,13 +23,13 @@ if (process.env.NODE_ENV === "development") {
 }
 
 app.use(express.json({ limit: "10kb" }));
-app.use(
-  session({
-    secret: process.env.JWT_SECRET, // Replace with a strong secret key
-    resave: false, // Don't save the session if it hasn't changed
-    saveUninitialized: true, // Save new sessions
-  })
-);
+// app.use(
+//   session({
+//     secret: process.env.JWT_SECRET, // Replace with a strong secret key
+//     resave: false, // Don't save the session if it hasn't changed
+//     saveUninitialized: true, // Save new sessions
+//   })
+// );
 
 app.get("/", (req, res) => {
   res.send("Welcome to Turjuman API[Beta]");

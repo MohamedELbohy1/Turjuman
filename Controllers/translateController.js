@@ -10,6 +10,9 @@ const session = require("express-session");
 
 exports.checkTranslationLimit = catchAsync(async (req, res, next) => {
   const userId = req.user.id;
+  if (!req.user) {
+    return next();
+  }
   console.log(`Checking daily limit for user: ${userId}`);
 
   const user = await userModel.findById(userId);
@@ -75,7 +78,7 @@ exports.translateAndSave = catchAsync(async (req, res, next) => {
   if (!text || !fromLang || !toLang) {
     return next(new AppError("Please provide text, fromLang, and toLang", 400));
   }
- 
+
   const userid = req.user;
   if (!userid) {
     const GUEST_TRANSLATION_LIMIT = 2;
