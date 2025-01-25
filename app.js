@@ -15,8 +15,18 @@ const corsOptions = {
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   allowedHeaders: "Content-Type,Authorization",
 };
+
 // cors
 app.use(cors(corsOptions));
+
+app.use(
+  session({
+    secret: "your-secret-key",
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false },
+  })
+);
 
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));

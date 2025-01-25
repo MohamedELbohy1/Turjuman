@@ -9,10 +9,11 @@ const factory = require("../Controllers/handerController");
 const session = require("express-session");
 
 exports.checkTranslationLimit = catchAsync(async (req, res, next) => {
-  const userId = req.user.id;
   if (!req.user) {
     return next();
   }
+  const userId = req.user.id;
+
   console.log(`Checking daily limit for user: ${userId}`);
 
   const user = await userModel.findById(userId);
@@ -78,6 +79,7 @@ exports.translateAndSave = catchAsync(async (req, res, next) => {
   if (!text || !fromLang || !toLang) {
     return next(new AppError("Please provide text, fromLang, and toLang", 400));
   }
+  const result = await translate(text, { from: fromLang, to: toLang });
 
   const userid = req.user;
   if (!userid) {
@@ -98,14 +100,13 @@ exports.translateAndSave = catchAsync(async (req, res, next) => {
       status: "success",
       data: {
         original: text,
-        translation: translations,
+        translation: result,
         count: req.session.guestTranslationCount,
       },
     });
   }
 
   // Use translate-google to get the translation
-  const result = await translate(text, { from: fromLang, to: toLang });
 
   // Check if the translation already exists in the database
   const userId = req.user.id;
