@@ -11,6 +11,7 @@ router.post("/login", authController.login);
 router.use(authController.protect);
 
 router.get("/me", userController.getMe, userController.getUser);
+router.patch("/updateMe", userController.updateMe);
 router.delete("/deleteMe", userController.deleteMe);
 router.put("/UpdateUserInfo/:id", userController.updateUser);
 router.delete("/:id", userController.deleteMe);
