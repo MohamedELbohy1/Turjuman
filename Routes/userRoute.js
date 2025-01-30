@@ -14,6 +14,7 @@ router.use(authController.protect);
 router.get("/me", userController.getMe, userController.getUser);
 router.patch("/updateMe", userController.updateMe);
 router.delete("/deleteMe", userController.deleteMe);
+router.patch("/updateMe", userController.updateMe);
 router.put("/UpdateUserInfo/:id", userController.updateUser);
 router.delete("/:id", userController.deleteMe);
 router.put("/ChangePassword/:id", authController.updateUserPassword);

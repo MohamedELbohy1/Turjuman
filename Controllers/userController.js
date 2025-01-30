@@ -5,6 +5,7 @@ const ApiFeaturs = require("../utils/ApiFeaturs");
 const factory = require("../Controllers/handerController");
 const bcrypt = require("bcryptjs");
 
+
 const filterObj = (obj, ...allowedfileds) => {
   const newObj = {};
   Object.keys(obj).forEach((el) => {
@@ -12,6 +13,7 @@ const filterObj = (obj, ...allowedfileds) => {
   });
   return newObj;
 };
+
 // Here we made a middleware to save the current user ID
 exports.getMe = (req, res, next) => {
   req.params.id = req.user.id;
@@ -46,13 +48,13 @@ exports.updateMe = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.deleteMe = catchAsync(async (req, res, next) => {
-  await User.findByIdAndUpdate(req.user.id, { active: false });
-  res.status(204).json({
-    status: "success",
-    data: null,
-  });
-});
+// exports.deleteMe = catchAsync(async (req, res, next) => {
+//   await User.findByIdAndUpdate(req.user.id, { active: false });
+//   res.status(204).json({
+//     status: "success",
+//     data: null,
+//   });
+// });
 
 exports.updateUser = catchAsync(async (req, res, next) => {
   const doc = await User.findByIdAndUpdate(
