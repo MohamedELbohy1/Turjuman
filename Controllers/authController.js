@@ -11,6 +11,26 @@ const signToken = (id) => {
   });
 };
 
+const createSendToken = (user, statusCode, res) => {
+  const token = signToken(user._id);
+  const cookieOptions = {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true,
+  };
+  if (process.env.NODE_ENV === "production") cookieOptions.secure = true;
+  res.cookie("jwt", token, cookieOptions);
+
+  user.password = undefined;
+  res.status(statusCode).json({
+    status: "success",
+    token,
+    data: {
+      user,
+    },
+  });
+};
 exports.signup = catchAsync(async (req, res, next) => {
   const newUser = await User.create({
     name: req.body.name,
@@ -21,15 +41,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     role: req.body.role,
   });
 
-  const token = signToken(newUser._id);
-
-  res.status(201).json({
-    status: "success",
-    token,
-    data: {
-      user: newUser,
-    },
-  });
+  createSendToken(newUser, 201, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -50,53 +62,62 @@ exports.login = catchAsync(async (req, res, next) => {
     await user.save({ validateModifiedOnly: true });
   }
 
-  const token = signToken(user._id);
-  res.status(200).json({
-    status: "success",
-    token,
-  });
+  createSendToken(newUser, 201, res);
 });
 
-exports.protect = catchAsync(async (req, res, next) => {
-  // 1) Get the token from the Authorization header
+exports.logout = (req, res) => {
+  res.cookie("jwt", "loggedout", {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+  });
+
+  res.status(200).json({
+    status: "success",
+    message: "Logged out successfully!",
+  });
+};
+
+exports.protect = asyncHandler(async (req, res, next) => {
   let token;
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    token = req.headers.authorization.split(" ")[1];
+  // if (
+  //   req.headers.authorization &&
+  //   req.headers.authorization.startsWith("Bearer")
+  // ) {
+  //   token = req.headers.authorization.split(" ")[1];
+  // }
+  if (req.cookies.jwt) {
+    token = req.cookies.jwt;
   }
 
   if (!token) {
     return next(
-      new AppError("You are not logged in! Please log in to get access.", 401)
+      new AppError("Your are not logged in , please login agin", 401)
     );
   }
+  try {
+    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+    const currentUser = await User.findById(decoded.id);
+    if (!currentUser) {
+      return next(
+        new AppError("The user is belonging to token is no longer exists", 401)
+      );
+    }
 
-  // 2) Verify the token
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-  // 3) Check if the user still exists
-  const currentUser = await User.findById(decoded.id);
-
-  if (!currentUser) {
+    if (currentUser.changedPasswordAfter(decoded.iat)) {
+      return next(
+        new AppError(
+          "The user recently changed password!,please login again.",
+          401
+        )
+      );
+    }
+    req.user = currentUser;
+    next();
+  } catch (err) {
     return next(
-      new AppError("The user belonging to this token no longer exists.", 401)
+      new AppError("Your are not logged in , please login agin", 401)
     );
   }
-
-  if (currentUser.ChangedPasswordAfter(decoded.iat)) {
-    return next(
-      new AppError(
-        "The user recently changed the password! please log in again",
-        401
-      )
-    );
-  }
-
-  req.user = currentUser;
-
-  next();
 });
 
 exports.restricTo = (...roles) => {
@@ -151,38 +172,41 @@ exports.updateUserPassword = catchAsync(async (req, res, next) => {
     data: user,
   });
 });
-
-exports.protectUserTranslate = catchAsync(async (req, res, next) => {
+exports.protectUserTranslate = asyncHandler(async (req, res, next) => {
   let token;
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    token = req.headers.authorization.split(" ")[1];
+  // if (
+  //   req.headers.authorization &&
+  //   req.headers.authorization.startsWith("Bearer")
+  // ) {
+  //   token = req.headers.authorization.split(" ")[1];
+  // }
+  if (req.cookies.jwt) {
+    token = req.cookies.jwt;
   }
 
   if (!token) {
     req.user = null;
     return next();
   }
+  try {
+    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+    const currentUser = await User.findById(decoded.id);
+    if (!currentUser) {
+      req.user = null;
+      return next();
+    }
 
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
-  const currentUser = await User.findById(decoded.id);
-
-  if (!currentUser) {
-    req.user = null;
+    if (currentUser.changedPasswordAfter(decoded.iat)) {
+      return next(
+        new AppError(
+          "The user recently changed password!,please login again.",
+          401
+        )
+      );
+    }
+    req.user = currentUser;
+    next();
+  } catch (err) {
     return next();
   }
-
-  if (currentUser.ChangedPasswordAfter(decoded.iat)) {
-    return next(
-      new AppError(
-        "The user recently changed the password! please log in again",
-        401
-      )
-    );
-  }
-
-  req.user = currentUser;
-  next();
 });
