@@ -5,11 +5,49 @@ const ApiFeaturs = require("../utils/ApiFeaturs");
 const factory = require("../Controllers/handerController");
 const bcrypt = require("bcryptjs");
 
+
+const filterObj = (obj, ...allowedfileds) => {
+  const newObj = {};
+  Object.keys(obj).forEach((el) => {
+    if (allowedfileds.includes(el)) newObj[el] = obj[el];
+  });
+  return newObj;
+};
+
+
 // Here we made a middleware to save the current user ID
 exports.getMe = (req, res, next) => {
   req.params.id = req.user.id;
   next();
 };
+
+exports.updateMe = catchAsync(async (req, res, next) => {
+  //1) create error if user update password
+  if (req.body.password || req.body.passwordConfirm) {
+    return next(
+      new AppError(
+        "This route is not for update password ,please use /updateMyPassword",
+        400
+      )
+    );
+  }
+
+  //2) filtered out unwanted fileds name that not allowed to be updated
+  const filteredBody = filterObj(req.body, "name", "email");
+
+  //3)Update user Doucment
+  const updatedUser = await User.findByIdAndUpdate(req.user.id, filteredBody, {
+    new: true,
+    runValidators: true,
+  });
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      user: updatedUser,
+    },
+  });
+});
 
 exports.deleteMe = catchAsync(async (req, res, next) => {
   await User.findByIdAndUpdate(req.user.id, { active: false });
@@ -18,7 +56,6 @@ exports.deleteMe = catchAsync(async (req, res, next) => {
     data: null,
   });
 });
-
 
 exports.updateUser = catchAsync(async (req, res, next) => {
   const doc = await User.findByIdAndUpdate(
